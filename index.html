@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+  <meta name="theme-color" content="#007AFF">
+  <title>VS Code Mobile</title>
+  
+  <!-- PWA: manifest + icon + chế độ standalone khi cài lên màn hình chính.
+       Icon đặt trong icons/ (xem README mục 7). -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="application-name" content="VS Code Mobile">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="VS Code">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!--
+    CẤU TRÚC MÀN HÌNH (theo thứ tự đọc từ trên xuống):
+    1. Title bar      — thanh tiêu đề + command center
+    2. Activity bar   — dải icon dọc, nằm TRONG sidebar (tiết kiệm ngang)
+    3. Sidebar        — Explorer / Search / Source Control / ...
+    4. Editor area    — tabs, breadcrumbs, Monaco, status bar
+    5. Bottom area    — group 1 phím ảo (cuộn ngang) + dock thao tác
+    6. Group 2        — rail công cụ Monaco trượt lên từ cạnh phải
+    7. Overlays       — command palette + preview HTML
+  -->
+
+  <div id="workbench" class="monaco-workbench">
+
+        <header class="statusbar">
+          <div class="statusbar-left">
+            <button class="status-item" type="button" id="statusRemote" title="Remote">
+              <svg class="icon" aria-hidden="true"><use href="#i-remote"></use></svg>
+              <span>Local</span>
+            </button>
+            <button class="status-item" type="button" id="statusBranch" title="Git branch">
+              <svg class="icon" aria-hidden="true"><use href="#i-source-control"></use></svg>
+              <span>main</span>
+            </button>
+            <button class="status-item" type="button" id="statusProblems" title="Problems">
+              <svg class="icon" aria-hidden="true"><use href="#i-error"></use></svg>
+              <span id="statusErrorCount">0</span>
+              <svg class="icon" aria-hidden="true"><use href="#i-warning"></use></svg>
+              <span id="statusWarningCount">0</span>
+            </button>
+          </div>
+          <div class="statusbar-right">
+            <button class="status-item" type="button" id="statusCursor" title="Vị trí con trỏ">
+              <span>Ln 1, Col 1</span>
+            </button>
+            <button class="status-item status-spaces" type="button" id="statusSpaces" title="Indentation">
+              <span>Spaces: 2</span>
+            </button>
+            <button class="status-item" type="button" id="statusLang" title="Ngôn ngữ">
+              <span id="statusLangText">HTML</span>
+            </button>
+          </div>
+        </header>    
+
+    <!-- ============================================================
+         1. TITLE BAR
+         ============================================================ -->
+    <header class="titlebar">
+      <div class="titlebar-left">
+        <button id="menuBtn" class="icon-btn" type="button" title="Mở/đóng sidebar" aria-expanded="false" aria-controls="sidebar">
+          <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+        </button>
+        <button id="backBtn" class="icon-btn" type="button" title="Quay lại" disabled>
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+        </button>
+        <button id="forwardBtn" class="icon-btn" type="button" title="Tiến tới" disabled>
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+        </button>
+      </div>
+
+      <button id="commandCenter" class="command-center" type="button" title="Command Palette (Ctrl+Shift+P)">
+        <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+        <span id="commandCenterLabel">monaco-mobile</span>
+      </button>
+
+      <div class="titlebar-right">
+        <button id="toggleSidebarBtn" class="icon-btn" type="button" title="Ẩn/hiện sidebar" aria-pressed="false">
+          <svg class="icon" aria-hidden="true"><use href="#i-layout-sidebar-left"></use></svg>
+        </button>
+        <button id="splitEditorBtn" class="icon-btn" type="button" title="Preview HTML" data-action="preview">
+          <svg class="icon" aria-hidden="true"><use href="#i-split-horizontal"></use></svg>
+        </button>
+        <button id="moreBtn" class="icon-btn" type="button" title="Command Palette" aria-label="Mở command palette">
+          <svg class="icon" aria-hidden="true"><use href="#i-ellipsis"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="workbench-body">
+
+      <!-- ============================================================
+           2 + 3. SIDEBAR — chứa ACTIVITY BAR dọc bên trong
+           ============================================================ -->
+      <aside id="sidebar" class="sidebar" aria-label="Sidebar">
+
+        <!-- Activity bar: dải icon dọc, nằm trong sidebar để tiết kiệm
+             chiều ngang trên mobile. -->
+        <nav id="activityBar" class="activitybar" aria-label="Activity Bar">
+          <button class="activity-item active" type="button" data-view="explorer" title="Explorer (Ctrl+Shift+E)">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-files"></use></svg>
+            <span class="activity-badge" id="explorerBadge" hidden>0</span>
+          </button>
+          <button class="activity-item" type="button" data-view="search" title="Search (Ctrl+Shift+F)">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-search"></use></svg>
+          </button>
+          <button class="activity-item" type="button" data-view="scm" title="Source Control (Ctrl+Shift+G)">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-source-control"></use></svg>
+            <span class="activity-badge" id="scmBadge" hidden>0</span>
+          </button>
+          <button class="activity-item" type="button" data-view="run" title="Run and Debug">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-debug-alt"></use></svg>
+          </button>
+          <button class="activity-item" type="button" data-view="extensions" title="Extensions">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-extensions"></use></svg>
+          </button>
+
+          <div class="activity-spacer"></div>
+
+          <button class="activity-item" type="button" data-action="account" title="Tài khoản">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-account"></use></svg>
+          </button>
+          <button class="activity-item" type="button" data-view="settings" title="Settings">
+            <svg class="icon icon-lg" aria-hidden="true"><use href="#i-settings-gear"></use></svg>
+          </button>
+        </nav>
+
+        <div class="sidebar-main">
+        <div class="sidebar-header">
+          <span id="sidebarTitle" class="sidebar-title">EXPLORER</span>
+          <div class="sidebar-actions" id="explorerActions">
+            <button id="newFileBtn" class="icon-btn" type="button" title="Tạo file mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-new-file"></use></svg>
+            </button>
+            <button id="newFolderBtn" class="icon-btn" type="button" title="Tạo thư mục mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-new-folder"></use></svg>
+            </button>
+            <button id="refreshTreeBtn" class="icon-btn" type="button" title="Làm mới Explorer">
+              <svg class="icon" aria-hidden="true"><use href="#i-refresh"></use></svg>
+            </button>
+            <button id="collapseTreeBtn" class="icon-btn" type="button" title="Thu gọn tất cả">
+              <svg class="icon" aria-hidden="true"><use href="#i-collapse-all"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-body">
+
+          <!-- 3.1 EXPLORER -->
+          <section class="view active" data-view-panel="explorer">
+            <div id="group2Wrap" class="explorer-tools">
+              <div class="section-label">WORKSPACE</div>
+              <button id="openFileBtn" class="menu-item" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-file-code"></use></svg>
+                <span>Mở file</span>
+                <kbd>Ctrl+O</kbd>
+              </button>
+              <button id="openFolderBtn" class="menu-item" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-folder-opened"></use></svg>
+                <span>Mở thư mục</span>
+              </button>
+              <button id="previewHtmlBtn" class="menu-item" type="button" data-action="preview">
+                <svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg>
+                <span>Preview HTML</span>
+              </button>
+              <button id="saveFileBtn" class="menu-item" type="button" data-action="save">
+                <svg class="icon" aria-hidden="true"><use href="#i-save"></use></svg>
+                <span>Lưu file</span>
+                <kbd>Ctrl+S</kbd>
+              </button>
+
+              <p id="fsHint" class="hint">
+                Chrome/Edge hỗ trợ File System Access API. Có thể mở cả thư mục,
+                preview tự cập nhật và đọc được css/js/svg/ảnh/font.
+              </p>
+
+              <div class="section-label section-row">
+                <span>FILES</span>
+                <span id="fileCount" class="count">0</span>
+              </div>
+            </div>
+            <div id="fileList" class="file-list" hidden></div>
+          </section>
+
+          <!-- 3.2 SEARCH -->
+          <section class="view" data-view-panel="search" hidden>
+            <label class="search-box">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input id="searchInput" type="search" placeholder="Tìm trong file…" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="check-row">
+              <input id="searchCase" type="checkbox">
+              <span>Phân biệt hoa/thường (Aa)</span>
+            </label>
+            <div id="searchResults" class="search-results">
+              <p class="hint">Nhập từ khóa để tìm trong file đang mở.</p>
+            </div>
+          </section>
+
+          <!-- 3.3 SOURCE CONTROL -->
+          <section class="view" data-view-panel="scm" hidden>
+            <div class="empty-state">
+              <svg class="icon empty-icon" aria-hidden="true"><use href="#i-source-control"></use></svg>
+              <p>Chưa có repository Git.</p>
+              <p class="hint">Đây là bản chạy offline bằng HTML/CSS/JS, không kết nối Git thật.</p>
+              <button id="initGitBtn" class="tool-btn" type="button">Khởi tạo Git</button>
+            </div>
+            <div class="section-label">THAY ĐỔI</div>
+            <div class="scm-row">
+              <svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg>
+              <span id="scmFile">Chưa mở file</span>
+              <span id="scmStatus" class="scm-status">—</span>
+            </div>
+          </section>
+
+          <!-- 3.4 RUN AND DEBUG -->
+          <section class="view" data-view-panel="run" hidden>
+            <div class="empty-state">
+              <svg class="icon empty-icon" aria-hidden="true"><use href="#i-debug-alt"></use></svg>
+              <p>Chạy trang HTML ngay trong app.</p>
+              <button id="runPreviewBtn" class="tool-btn" type="button" data-action="preview">
+                <svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>
+                Chạy Preview
+              </button>
+              <p class="hint">Preview dùng iframe + blob URL để nạp CSS, JS, ảnh cùng thư mục.</p>
+            </div>
+          </section>
+
+          <!-- 3.5 EXTENSIONS -->
+          <section class="view" data-view-panel="extensions" hidden>
+            <label class="search-box">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input id="extensionSearch" type="search" placeholder="Tìm extension…" autocomplete="off">
+            </label>
+            <div id="extensionList" class="extension-list">
+              <article class="extension-card" data-name="monaco editor">
+                <div class="extension-icon"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-file-code"></use></svg></div>
+                <div class="extension-body">
+                  <div class="extension-title">Monaco Editor <span class="installed">Đã cài</span></div>
+                  <p class="hint">Trình soạn thảo lõi của VS Code, chạy qua CDN.</p>
+                </div>
+              </article>
+              <article class="extension-card" data-name="html preview">
+                <div class="extension-icon"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-globe"></use></svg></div>
+                <div class="extension-body">
+                  <div class="extension-title">HTML Preview <span class="installed">Đã cài</span></div>
+                  <p class="hint">Xem trước HTML, tự rewrite asset tương đối.</p>
+                </div>
+              </article>
+              <article class="extension-card" data-name="codicons">
+                <div class="extension-icon"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-symbol-color"></use></svg></div>
+                <div class="extension-body">
+                  <div class="extension-title">Codicons <span class="installed">Đã cài</span></div>
+                  <p class="hint">Bộ icon chính thức của VS Code (giấy phép MIT).</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- 3.6 SETTINGS -->
+          <section class="view" data-view-panel="settings" hidden>
+            <div class="section-label">EDITOR</div>
+            <label class="setting-row">
+              <span>Ngôn ngữ</span>
+              <select id="language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="html" selected>HTML</option>
+                <option value="css">CSS</option>
+                <option value="scss">SCSS</option>
+                <option value="less">Less</option>
+                <option value="json">JSON</option>
+                <option value="python">Python</option>
+                <option value="markdown">Markdown</option>
+                <option value="xml">XML</option>
+                <option value="yaml">YAML</option>
+                <option value="shell">Shell</option>
+                <option value="php">PHP</option>
+                <option value="java">Java</option>
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="csharp">C#</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="sql">SQL</option>
+                <option value="plaintext">Plain text</option>
+              </select>
+            </label>
+            <label class="setting-row">
+              <span>Theme</span>
+              <select id="theme">
+                <option value="vs-dark" selected>Dark</option>
+                <option value="vs">Light</option>
+                <option value="hc-black">High Contrast</option>
+              </select>
+            </label>
+            <button id="wrapBtn" class="menu-item" type="button">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+              <span>Word wrap: On</span>
+            </button>
+
+            <div class="section-label">PHÍM TẮT</div>
+            <div class="shortcut-list">
+              <button class="shortcut-row" type="button" data-action="selectAll"><span>Chọn tất cả</span><kbd>Ctrl+A</kbd></button>
+              <button class="shortcut-row" type="button" data-action="copy"><span>Sao chép</span><kbd>Ctrl+C</kbd></button>
+              <button class="shortcut-row" type="button" data-action="paste"><span>Dán</span><kbd>Ctrl+V</kbd></button>
+              <button class="shortcut-row" type="button" data-action="cut"><span>Cắt</span><kbd>Ctrl+X</kbd></button>
+              <button class="shortcut-row" type="button" data-action="undo"><span>Hoàn tác</span><kbd>Ctrl+Z</kbd></button>
+              <button class="shortcut-row" type="button" data-action="redo"><span>Làm lại</span><kbd>Ctrl+Y</kbd></button>
+              <button class="shortcut-row" type="button" data-action="find"><span>Tìm</span><kbd>Ctrl+F</kbd></button>
+              <button class="shortcut-row" type="button" data-action="gotoLine"><span>Tới dòng</span><kbd>Ctrl+G</kbd></button>
+              <button class="shortcut-row" type="button" data-action="comment"><span>Comment</span><kbd>Ctrl+/</kbd></button>
+              <button class="shortcut-row" type="button" data-action="duplicate"><span>Nhân dòng</span><kbd>Ctrl+D</kbd></button>
+            </div>
+
+            <div class="section-label">GIỚI THIỆU</div>
+            <p class="hint">
+              Giao diện lấy cảm hứng từ VS Code Workbench. Icon: @vscode/codicons (MIT).
+              Toàn bộ là HTML, CSS, JavaScript thuần và SVG — không build step.
+            </p>
+          </section>
+
+        </div><!-- /.sidebar-body -->
+        </div><!-- /.sidebar-main -->
+      </aside>
+
+      <div id="sidebarScrim" class="sidebar-scrim" hidden></div>
+
+      <!-- ============================================================
+           4. EDITOR AREA
+           ============================================================ -->
+      <main class="editor-area">
+        <div class="tabs-and-actions">
+          <div id="tabs" class="tabs" role="tablist" aria-label="Open editors">
+            <div class="tab active" role="tab" aria-selected="true">
+              <svg id="fileIcon" class="icon tab-file-icon" aria-hidden="true"><use href="#i-file-code"></use></svg>
+              <span id="tabLabel" class="tab-label">Welcome</span>
+              <span id="tabDirty" class="dirty-dot" title="Có thay đổi chưa lưu" hidden></span>
+              <button id="tabClose" class="tab-close" type="button" title="Đóng tab" aria-label="Đóng tab">
+                <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+              </button>
+            </div>
+            <button id="newTabBtn" class="icon-btn tab-new" type="button" title="Mở file mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-add"></use></svg>
+            </button>
+          </div>
+
+          <div class="editor-actions">
+            <button class="icon-btn" type="button" title="Tìm (Ctrl+F)" data-action="find">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+            </button>
+            <button id="saveBtn" class="icon-btn" type="button" title="Lưu (Ctrl+S)" data-action="save">
+              <svg class="icon" aria-hidden="true"><use href="#i-save"></use></svg>
+            </button>
+            <button id="previewBtn" class="icon-btn" type="button" title="Preview HTML" data-action="preview">
+              <svg class="icon" aria-hidden="true"><use href="#i-play"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumbs">
+          <span class="crumb">Workspace</span>
+          <svg class="icon crumb-sep" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          <span id="breadcrumbFile" class="crumb">Welcome</span>
+          <svg class="icon crumb-sep" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          <span id="breadcrumbLang" class="crumb crumb-lang">HTML</span>
+        </div>
+
+        <div class="editor-host">
+          <div id="editor"></div>
+          <div id="fallback" class="fallback" hidden></div>
+          <div id="status" class="status-chip" role="status" aria-live="polite">Đang tải Monaco…</div>
+        </div>
+
+
+      </main>
+    </div>
+
+    <!-- ============================================================
+         5. BOTTOM AREA
+             Group 1 (phím ảo, cuộn ngang) + dock thao tác nhanh
+         ============================================================ -->
+    <div id="bottomArea" class="bottom-area">
+
+      <!-- GROUP 1: hàng phím ảo cuộn ngang.
+           Nội dung do 07.ui.js sinh từ App.commands.vkeys (06.commands.js). -->
+      <div id="vkeyBar" class="vkey-bar" role="toolbar" aria-label="Phím ảo"></div>
+
+      <!-- Dock: các nút quan trọng, tự cuộn ngang nếu màn hình quá hẹp -->
+      <div id="bottomDock" class="bottom-dock">
+        <div class="dock-scroll">
+          <button id="dockMenu" class="dock-btn" type="button" title="Sidebar">
+            <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+            <span>Menu</span>
+          </button>
+          <button id="undoBtn" class="dock-btn" type="button" title="Hoàn tác" data-action="undo">
+            <svg class="icon" aria-hidden="true"><use href="#i-discard"></use></svg>
+            <span>Undo</span>
+          </button>
+          <button id="redoBtn" class="dock-btn" type="button" title="Làm lại" data-action="redo">
+            <svg class="icon" aria-hidden="true"><use href="#i-redo"></use></svg>
+            <span>Redo</span>
+          </button>
+
+          <span class="dock-sep" aria-hidden="true"></span>
+
+          <button id="keyboardBtn" class="dock-btn dock-accent" type="button" title="Mở bàn phím">
+            <svg class="icon" aria-hidden="true"><use href="#i-terminal"></use></svg>
+            <span>Gõ</span>
+          </button>
+          <button id="dockPaletteBtn" class="dock-btn" type="button" title="Command Palette">
+            <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+            <span>Lệnh</span>
+          </button>
+          <button id="dockSaveBtn" class="dock-btn" type="button" title="Lưu file" data-action="save">
+            <svg class="icon" aria-hidden="true"><use href="#i-save"></use></svg>
+            <span>Lưu</span>
+          </button>
+          <button id="dockPreviewBtn" class="dock-btn" type="button" title="Preview HTML" data-action="preview">
+            <svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg>
+            <span>Xem</span>
+          </button>
+
+          <span class="dock-sep" aria-hidden="true"></span>
+
+          <button id="vkeyToggleBtn" class="dock-btn" type="button" title="Ẩn/hiện hàng phím ảo" aria-pressed="true">
+            <svg class="icon" aria-hidden="true"><use href="#i-symbol-key"></use></svg>
+            <span>Phím</span>
+          </button>
+          <button id="toolRailToggleBtn" class="dock-btn" type="button" title="Công cụ Monaco" aria-pressed="false">
+            <svg class="icon" aria-hidden="true"><use href="#i-tools"></use></svg>
+            <span>Công cụ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         6. GROUP 2 — cột công cụ Monaco, trượt lên từ cạnh phải.
+         Chỉ icon, danh sách do 11.editor.js sinh từ App.commands.tools.
+         ============================================================ -->    <aside id="toolRail" class="tool-rail" aria-label="Công cụ Monaco" aria-hidden="true">
+      <div class="tool-rail-head">
+        <svg class="icon" aria-hidden="true"><use href="#i-tools"></use></svg>
+        <button id="toolRailCloseBtn" class="icon-btn" type="button" title="Đóng cột công cụ" aria-label="Đóng cột công cụ">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+      <div id="toolRailList" class="tool-rail-list"></div>
+    </aside>
+
+    <!-- ============================================================
+         7.1 COMMAND PALETTE
+         ============================================================ -->
+    <div id="palette" class="palette" hidden>
+      <div class="palette-box" role="dialog" aria-modal="true" aria-label="Command Palette">
+        <div class="palette-input-row">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          <input id="paletteInput" type="text" placeholder="Nhập lệnh…" autocomplete="off" spellcheck="false" aria-controls="paletteList">
+          <button id="paletteClose" class="icon-btn" type="button" title="Đóng (Esc)">
+            <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+          </button>
+        </div>
+        <div id="paletteList" class="palette-list" role="listbox"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         7.2 PREVIEW HTML
+         ============================================================ -->
+    <div id="previewWrap" class="preview-wrap">
+      <div class="preview-panel">
+        <div class="preview-bar">
+          <svg class="icon" aria-hidden="true"><use href="#i-globe"></use></svg>
+          <div id="previewTitle" class="preview-title">HTML Preview</div>
+          <label class="inline-opt"><input id="autoPreviewChk" type="checkbox" checked> Auto</label>
+          <button id="refreshPreviewBtn" class="icon-btn" type="button" title="Làm mới">
+            <svg class="icon" aria-hidden="true"><use href="#i-refresh"></use></svg>
+          </button>
+          <button id="closePreviewBtn" class="icon-btn" type="button" title="Đóng">
+            <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+          </button>
+        </div>
+        <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-same-origin" title="HTML Preview"></iframe>
+      </div>
+    </div>
+
+    <!-- Input ẩn cho trình duyệt không hỗ trợ File System Access API -->
+    <input id="fileInput" type="file" hidden>
+    <input id="folderInput" type="file" webkitdirectory directory multiple hidden>
+  </div>
+
+  <!--
+    THỨ TỰ NẠP MODULE (đọc từ trên xuống):
+    01 hằng số → 02 trạng thái → 03 icon → 04 DOM → 05 tiện ích
+    → 06 dữ liệu lệnh (JSON) → 07 giao diện → 08 file
+    → 09 preview → 10 phím tắt → 11 editor → 12 bootstrap
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.min.js"></script>
+  <script src="js/01.constants.js"></script>
+  <script src="js/02.state.js"></script>
+  <script src="js/03.icons.js"></script>
+  <script src="js/04.dom.js"></script>
+  <script src="js/05.utils.js"></script>
+  <script src="js/06.commands.js"></script>
+  <script src="js/07.ui.js"></script>
+  <script src="js/08.files.js"></script>
+  <script src="js/09.preview.js"></script>
+  <script src="js/10.shortcuts.js"></script>
+  <script src="js/11.editor.js"></script>
+  <script src="js/12.main.js"></script>
+</body>
+</html>
