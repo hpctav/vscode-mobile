@@ -1,1 +1,1379 @@
+/* ============================================================
+   VS CODE MOBILE — Stylesheet tối giản
+   ------------------------------------------------------------
+   Thứ tự đọc:
+   01 biến thiết kế → 02 reset → 03 khung → 04 title bar
+   → 05 activity bar → 06 sidebar → 07 editor → 08 status bar
+   → 09 dock → 10 palette → 11 preview → 12 responsive
+   Màu lấy theo theme Dark+ của VS Code.
+   ============================================================ */
 
+/* ------------------------------------------------------------
+   01. BIẾN THIẾT KẾ
+   ------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Roboto, Helvetica, Arial, sans-serif;
+
+  --editor: #1e1e1e;
+  --fg: #cccccc;
+  --fg-dim: #9d9d9d;
+  --icon: #c5c5c5;
+  --border: #2b2b2b;
+
+  --activity: #333333;
+  --activity-fg: #ffffff;
+  --activity-inactive: rgba(255, 255, 255, 0.6);
+
+  --sidebar: #252526;
+  --titlebar: #3c3c3c;
+
+  --tab-active: #1e1e1e;
+  --tab-inactive: #2d2d2d;
+  --tab-fg: rgba(255, 255, 255, 0.6);
+  --tab-active-fg: #ffffff;
+
+  --statusbar: #007acc;
+  --statusbar-fg: #ffffff;
+
+  --button: #0e639c;
+  --button-hover: #1177bb;
+  --focus: #007fd4;
+  --list-hover: #2a2d2e;
+  --list-active: #04395e;
+
+  --error: #f14c4c;
+  --warning: #cca700;
+  --success: #89d185;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --dock-h: 48px;
+  --vkbd: 0px;
+}
+
+/* ------------------------------------------------------------
+   02. RESET + NỀN TẢNG
+   ------------------------------------------------------------ */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--editor);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.4;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+input,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #264f78;
+}
+
+/* Icon SVG dùng lại sprite #codicon-sprite */
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  display: inline-block;
+  fill: currentColor;
+  vertical-align: middle;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--fg);
+}
+
+.icon-btn:hover:not(:disabled),
+.icon-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+}
+
+kbd {
+  padding: 1px 5px;
+  border: 1px solid #4d4d4d;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: #3c3c3c;
+  color: var(--fg-dim);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   03. KHUNG CHÍNH
+   ------------------------------------------------------------ */
+.monaco-workbench {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding-bottom: calc(var(--dock-h) + var(--vkbd));
+  background: var(--editor);
+  overflow: hidden;
+}
+
+.workbench-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   04. TITLE BAR
+   ------------------------------------------------------------ */
+.titlebar {
+  flex: 0 0 auto;
+  height: calc(30px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--titlebar);
+  border-bottom: 1px solid var(--border);
+  color: #fff;
+}
+
+.titlebar-left,
+.titlebar-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.command-center {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  margin: 0 4px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #454545;
+  border-radius: 6px;
+  background: #2d2d2d;
+  color: #cccccc;
+  font-size: 12px;
+}
+
+.command-center:hover {
+  background: #333333;
+  border-color: #5a5a5a;
+}
+
+.command-center span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-center .icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------------------
+   05. ACTIVITY BAR
+   ------------------------------------------------------------
+   Activity bar nằm BÊN TRONG sidebar (cột dọc 44px) để trên
+   mobile không mất thêm chiều ngang cho editor.
+   ------------------------------------------------------------ */
+.activitybar {
+  flex: 0 0 44px;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  background: var(--activity);
+  color: var(--activity-inactive);
+}
+
+.activity-item {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-left: 2px solid transparent;
+  color: inherit;
+}
+
+.activity-item:hover {
+  color: #fff;
+}
+
+.activity-item.active {
+  color: var(--activity-fg);
+  border-left-color: #fff;
+}
+
+.activity-spacer {
+  flex: 1;
+}
+
+.activity-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--button);
+  color: #fff;
+  font-size: 9px;
+  line-height: 15px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------
+   06. SIDEBAR (chứa activity bar + nội dung view)
+   ------------------------------------------------------------ */
+.sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  width: min(88vw, 360px);
+  display: flex;
+  flex-direction: row;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+  transform: translateX(-110%);
+  transition: transform 0.18s ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Phần nội dung bên phải activity bar */
+.sidebar-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-header {
+  flex: 0 0 auto;
+  height: 35px;
+  padding: 0 6px 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.sidebar-title {
+  overflow: hidden;
+  color: var(--fg-dim);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-actions {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.sidebar-actions .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.sidebar-actions .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sidebar-body {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 8px;
+  overflow-y: auto;
+}
+
+.view {
+  padding-bottom: 8px;
+}
+
+.section-label {
+  padding: 8px 12px 4px;
+  color: var(--fg-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count {
+  color: var(--fg-dim);
+  font-size: 10px;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--list-hover);
+}
+
+.menu-item .icon {
+  color: var(--icon);
+}
+
+.menu-item kbd {
+  margin-left: auto;
+}
+
+.hint {
+  margin: 6px 12px;
+  color: var(--fg-dim);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Search box dùng chung cho Search / Extensions */
+.search-box {
+  margin: 8px 10px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: #3c3c3c;
+}
+
+.search-box:focus-within {
+  border-color: var(--focus);
+}
+
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+}
+
+.search-box .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--fg-dim);
+}
+
+.check-row {
+  padding: 2px 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-dim);
+  font-size: 11px;
+}
+
+.search-result {
+  width: 100%;
+  padding: 5px 10px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #2a2a2a;
+  color: var(--fg);
+  font-size: 11px;
+  text-align: left;
+}
+
+.search-result:hover {
+  background: var(--list-hover);
+}
+
+.search-line {
+  flex: 0 0 30px;
+  color: var(--fg-dim);
+  text-align: right;
+}
+
+.search-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result mark {
+  background: #613214;
+  color: #fff;
+}
+
+.empty-state {
+  padding: 28px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
+  opacity: 0.45;
+}
+
+.tool-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 3px;
+  background: var(--button);
+  color: #fff;
+  font-size: 12px;
+}
+
+.tool-btn:hover {
+  background: var(--button-hover);
+}
+
+.scm-row {
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.scm-row span:nth-child(2) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-status {
+  color: var(--fg-dim);
+  font-size: 11px;
+}
+
+.scm-status.modified {
+  color: var(--warning);
+}
+
+.extension-card {
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.extension-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--button);
+  color: #fff;
+}
+
+.extension-body {
+  min-width: 0;
+}
+
+.extension-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.installed {
+  padding: 0 5px;
+  border: 1px solid #3c6b3c;
+  border-radius: 999px;
+  color: var(--success);
+  font-size: 10px;
+}
+
+.extension-body .hint {
+  margin: 2px 0 0;
+}
+
+.setting-row {
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.setting-row select {
+  max-width: 58%;
+  padding: 5px 6px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  background: #3c3c3c;
+  color: #fff;
+  font-size: 12px;
+}
+
+.shortcut-row {
+  width: 100%;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.shortcut-row:hover {
+  background: var(--list-hover);
+}
+
+/* Cây file */
+.file-list {
+  padding: 0 4px 8px;
+}
+
+.tree-row {
+  min-height: 24px;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 3px;
+  color: var(--fg);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tree-row:hover {
+  background: var(--list-hover);
+}
+
+.tree-row.active {
+  background: var(--list-active);
+  color: #fff;
+}
+
+.tree-toggle {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--fg-dim);
+}
+
+.tree-toggle .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.tree-toggle-empty {
+  opacity: 0;
+}
+
+.tree-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--icon);
+}
+
+.tree-icon .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-children {
+  margin-left: 9px;
+  padding-left: 4px;
+  border-left: 1px solid #333;
+}
+
+.tree-children.collapsed {
+  display: none;
+}
+
+.icon-accent {
+  color: #4fc1ff;
+}
+
+/* ------------------------------------------------------------
+   07. EDITOR AREA
+   ------------------------------------------------------------ */
+.editor-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--editor);
+  overflow: hidden;
+}
+
+.tabs-and-actions {
+  flex: 0 0 auto;
+  height: 36px;
+  display: flex;
+  align-items: stretch;
+  background: var(--tab-inactive);
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 120px;
+  max-width: 210px;
+  height: 35px;
+  padding: 0 6px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--tab-inactive);
+  border-right: 1px solid var(--border);
+  color: var(--tab-fg);
+}
+
+.tab.active {
+  background: var(--tab-active);
+  color: var(--tab-active-fg);
+  box-shadow: inset 0 1px 0 var(--focus);
+}
+
+.tab-file-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dirty-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg);
+}
+
+.tab-close {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  opacity: 0;
+}
+
+.tab.active .tab-close,
+.tab:hover .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tab-close .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.tab-new {
+  width: 32px;
+  height: 35px;
+  flex: 0 0 auto;
+}
+
+.editor-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+  background: var(--tab-inactive);
+}
+
+.editor-actions .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.editor-actions .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.breadcrumbs {
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--editor);
+  color: var(--fg-dim);
+  font-size: 11px;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.breadcrumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.crumb {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crumb-sep {
+  width: 12px;
+  height: 12px;
+  opacity: 0.55;
+}
+
+.crumb-lang {
+  color: var(--fg-dim);
+}
+
+.editor-host {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#editor {
+  position: absolute;
+  inset: 0;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  padding: 12px;
+  overflow: auto;
+  background: var(--editor);
+  color: #f48771;
+  font-size: 13px;
+}
+
+.status-chip {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 30;
+  max-width: 62%;
+  padding: 3px 9px;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  background: rgba(37, 37, 38, 0.92);
+  color: #9cdcfe;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow: hidden;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   08. STATUS BAR
+   ------------------------------------------------------------ */
+.statusbar {
+  flex: 0 0 18pxpx;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  overflow: hidden;
+  background: var(--statusbar);
+  color: var(--statusbar-fg);
+  font-size: 11px;
+}
+
+.statusbar-left,
+.statusbar-right {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.status-item {
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 0;
+  color: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.status-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.statusbar .icon {
+  width: 10px;
+  height: 10px;
+}
+
+/* ------------------------------------------------------------
+   09. BOTTOM AREA — group 1 (phím ảo) + dock
+   ------------------------------------------------------------ */
+.bottom-area {
+  position: fixed;
+  right: 0;
+  bottom: var(--vkbd);
+  left: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--activity);
+  border-top: 1px solid var(--border);
+}
+
+/* GROUP 1 — hàng phím ảo cuộn ngang */
+.vkey-bar {
+  padding: 5px 6px 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  background: #252526;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vkey-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.vkey-bar[hidden] {
+  display: none;
+}
+
+.vkey {
+  flex: 0 0 auto;
+  min-width: 34px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #3f3f3f;
+  border-radius: 5px;
+  background: #333333;
+  color: var(--fg);
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.vkey:active {
+  background: var(--list-active);
+  color: #fff;
+}
+
+/* Dock — nằm dưới hàng phím ảo */
+.bottom-dock {
+  flex: 0 0 auto;
+  background: var(--activity);
+  border-top: 1px solid var(--border);
+}
+
+.dock-scroll {
+  padding: 4px 2px calc(4px + var(--safe-bottom));
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dock-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.dock-btn {
+  flex: 0 0 auto;
+  min-width: 36px;
+  height: 40px;
+  padding: 0 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 9px;
+  line-height: 1;
+}
+
+.dock-btn span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nhãn "Công cụ" dài hơn các nhãn khác một chút */
+#toolRailToggleBtn {
+  min-width: 48px;
+}
+
+.dock-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.dock-btn:hover,
+.dock-btn:active {
+  background: var(--list-hover);
+}
+
+.dock-btn.active {
+  background: var(--list-active);
+  color: #fff;
+}
+
+.dock-btn:disabled {
+  opacity: 0.35;
+}
+
+.dock-accent {
+  background: var(--button);
+  color: #fff;
+}
+
+.dock-accent:hover,
+.dock-accent:active {
+  background: var(--button-hover);
+}
+
+.dock-sep {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 24px;
+  margin: 0 2px;
+  background: var(--border);
+}
+
+/* ------------------------------------------------------------
+   09b. GROUP 2 — cột công cụ Monaco (icon-only, cuộn dọc)
+   ------------------------------------------------------------
+   Rail nằm sát phải, phía trên bottom area. Khi đóng, trượt
+   xuống dưới màn hình; khi mở, trượt lên.
+   ------------------------------------------------------------ */
+.tool-rail {
+  position: fixed;
+  right: 0;
+  bottom: calc(var(--dock-h) + var(--vkbd));
+  z-index: 70;
+  width: 52px;
+  max-height: min(62vh, 520px);
+  max-height: min(62vh, 520px, calc(100dvh - var(--dock-h) - var(--vkbd) - 12px));
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: 10px 0 0 0;
+  box-shadow: -4px -4px 16px rgba(0, 0, 0, 0.35);
+  transform: translateY(calc(100% + var(--dock-h) + var(--vkbd)));
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.18s ease, visibility 0.18s ease;
+}
+
+.tool-rail.open {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.tool-rail-head {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 4px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-dim);
+}
+
+.tool-rail-head .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.tool-rail-head .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.tool-rail-list {
+  flex: 1;
+  min-height: 0;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tool-icon-btn {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--fg);
+}
+
+.tool-icon-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tool-icon-btn:hover,
+.tool-icon-btn:active {
+  background: var(--list-hover);
+  color: #fff;
+}
+
+.tool-icon-btn.active {
+  background: var(--list-active);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   10. COMMAND PALETTE
+   ------------------------------------------------------------ */
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 10vh 10px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.palette-box {
+  width: min(560px, 100%);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #454545;
+  border-radius: 8px;
+  background: var(--sidebar);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.palette-input-row {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--titlebar);
+}
+
+.palette-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 15px;
+}
+
+.palette-list {
+  padding: 4px;
+  overflow-y: auto;
+}
+
+.palette-item {
+  width: 100%;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  color: var(--fg);
+  text-align: left;
+}
+
+.palette-item:hover,
+.palette-item.active {
+  background: var(--list-active);
+  color: #fff;
+}
+
+.palette-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-item kbd {
+  margin-left: auto;
+}
+
+.palette-empty {
+  margin: 10px;
+}
+
+/* ------------------------------------------------------------
+   11. PREVIEW
+   ------------------------------------------------------------ */
+.preview-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: none;
+  background: var(--editor);
+}
+
+.preview-wrap.open {
+  display: flex;
+}
+
+.preview-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--editor);
+}
+
+.preview-bar {
+  flex: 0 0 auto;
+  padding: calc(6px + env(safe-area-inset-top, 0px)) 8px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--titlebar);
+}
+
+.preview-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.preview-frame {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  background: #fff;
+}
+
+/* ------------------------------------------------------------
+   12. RESPONSIVE
+   ------------------------------------------------------------ */
+@media (max-width: 420px) {
+  #backBtn,
+  #forwardBtn {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .status-spaces {
+    display: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .sidebar {
+    position: relative;
+    left: 0;
+    flex: 0 0 320px;
+    width: 320px;
+    transform: none;
+    display: none;
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    display: flex;
+  }
+
+  .sidebar-scrim {
+    display: none !important;
+  }
+
+  .dock-scroll {
+    justify-content: center;
+  }
+
+  .tool-rail {
+    right: 12px;
+    border-right: 1px solid var(--border);
+    border-radius: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
